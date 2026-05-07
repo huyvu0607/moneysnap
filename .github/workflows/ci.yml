@@ -85,14 +85,31 @@ jobs:
         uses: azure/cli@v1
         with:
           inlineScript: |
-            az containerapp update \
-              --name moneysnap-backend \
-              --resource-group moneysnap-rg \
-              --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-backend:latest \
-              --set-env-vars \
-                SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
-                SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
-                SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            if az containerapp show --name moneysnap-backend --resource-group moneysnap-rg &>/dev/null; then
+              az containerapp update \
+                --name moneysnap-backend \
+                --resource-group moneysnap-rg \
+                --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-backend:latest \
+                --set-env-vars \
+                  SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
+                  SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
+                  SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            else
+              az containerapp create \
+                --name moneysnap-backend \
+                --resource-group moneysnap-rg \
+                --environment moneysnap-env \
+                --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-backend:latest \
+                --target-port 8080 \
+                --ingress external \
+                --registry-server ${{ secrets.AZURE_REGISTRY_URL }} \
+                --registry-username ${{ secrets.AZURE_REGISTRY_USERNAME }} \
+                --registry-password ${{ secrets.AZURE_REGISTRY_PASSWORD }} \
+                --env-vars \
+                  SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
+                  SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
+                  SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            fi
 
       - name: Deploy Frontend to Container App
         uses: azure/cli@v1
