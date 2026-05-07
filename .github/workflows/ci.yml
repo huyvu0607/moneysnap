@@ -92,34 +92,21 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         with:
           inlineScript: |
-            if az containerapp show --name moneysnap-backend --resource-group moneysnap-rg &>/dev/null; then
-              az containerapp update \
-                --name moneysnap-backend \
-                --resource-group moneysnap-rg \
-                --image "$REGISTRY_URL/moneysnap-backend:latest" \
-                --registry-server "$REGISTRY_URL" \
-                --registry-username "$REGISTRY_USER" \
-                --registry-password "$REGISTRY_PASS" \
-                --set-env-vars \
-                  SPRING_DATASOURCE_URL="$DB_URL" \
-                  SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
-                  SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD"
-            else
-              az containerapp create \
-                --name moneysnap-backend \
-                --resource-group moneysnap-rg \
-                --environment moneysnap-env \
-                --image "$REGISTRY_URL/moneysnap-backend:latest" \
-                --target-port 8080 \
-                --ingress external \
-                --registry-server "$REGISTRY_URL" \
-                --registry-username "$REGISTRY_USER" \
-                --registry-password "$REGISTRY_PASS" \
-                --env-vars \
-                  SPRING_DATASOURCE_URL="$DB_URL" \
-                  SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
-                  SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD"
-            fi
+            az containerapp registry set \
+              --name moneysnap-backend \
+              --resource-group moneysnap-rg \
+              --server "$REGISTRY_URL" \
+              --username "$REGISTRY_USER" \
+              --password "$REGISTRY_PASS"
+
+            az containerapp update \
+              --name moneysnap-backend \
+              --resource-group moneysnap-rg \
+              --image "$REGISTRY_URL/moneysnap-backend:latest" \
+              --set-env-vars \
+                SPRING_DATASOURCE_URL="$DB_URL" \
+                SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
+                SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD"
 
       - name: Deploy Frontend to Container App
         uses: azure/cli@v1
@@ -129,23 +116,14 @@ jobs:
           REGISTRY_PASS: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
         with:
           inlineScript: |
-            if az containerapp show --name moneysnap-frontend --resource-group moneysnap-rg &>/dev/null; then
-              az containerapp update \
-                --name moneysnap-frontend \
-                --resource-group moneysnap-rg \
-                --image "$REGISTRY_URL/moneysnap-frontend:latest" \
-                --registry-server "$REGISTRY_URL" \
-                --registry-username "$REGISTRY_USER" \
-                --registry-password "$REGISTRY_PASS"
-            else
-              az containerapp create \
-                --name moneysnap-frontend \
-                --resource-group moneysnap-rg \
-                --environment moneysnap-env \
-                --image "$REGISTRY_URL/moneysnap-frontend:latest" \
-                --target-port 80 \
-                --ingress external \
-                --registry-server "$REGISTRY_URL" \
-                --registry-username "$REGISTRY_USER" \
-                --registry-password "$REGISTRY_PASS"
-            fi
+            az containerapp registry set \
+              --name moneysnap-frontend \
+              --resource-group moneysnap-rg \
+              --server "$REGISTRY_URL" \
+              --username "$REGISTRY_USER" \
+              --password "$REGISTRY_PASS"
+
+            az containerapp update \
+              --name moneysnap-frontend \
+              --resource-group moneysnap-rg \
+              --image "$REGISTRY_URL/moneysnap-frontend:latest"
