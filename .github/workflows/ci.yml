@@ -116,14 +116,27 @@ jobs:
           REGISTRY_PASS: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
         with:
           inlineScript: |
-            az containerapp registry set \
-              --name moneysnap-frontend \
-              --resource-group moneysnap-rg \
-              --server "$REGISTRY_URL" \
-              --username "$REGISTRY_USER" \
-              --password "$REGISTRY_PASS"
+            if az containerapp show --name moneysnap-frontend --resource-group moneysnap-rg &>/dev/null; then
+              az containerapp registry set \
+                --name moneysnap-frontend \
+                --resource-group moneysnap-rg \
+                --server "$REGISTRY_URL" \
+                --username "$REGISTRY_USER" \
+                --password "$REGISTRY_PASS"
 
-            az containerapp update \
-              --name moneysnap-frontend \
-              --resource-group moneysnap-rg \
-              --image "$REGISTRY_URL/moneysnap-frontend:latest"
+              az containerapp update \
+                --name moneysnap-frontend \
+                --resource-group moneysnap-rg \
+                --image "$REGISTRY_URL/moneysnap-frontend:latest"
+            else
+              az containerapp create \
+                --name moneysnap-frontend \
+                --resource-group moneysnap-rg \
+                --environment moneysnap-env \
+                --image "$REGISTRY_URL/moneysnap-frontend:latest" \
+                --target-port 80 \
+                --ingress external \
+                --registry-server "$REGISTRY_URL" \
+                --registry-username "$REGISTRY_USER" \
+                --registry-password "$REGISTRY_PASS"
+            fi
