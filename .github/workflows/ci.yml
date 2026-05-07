@@ -83,52 +83,69 @@ jobs:
 
       - name: Deploy Backend to Container App
         uses: azure/cli@v1
+        env:
+          REGISTRY_URL: ${{ secrets.AZURE_REGISTRY_URL }}
+          REGISTRY_USER: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+          REGISTRY_PASS: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         with:
           inlineScript: |
             if az containerapp show --name moneysnap-backend --resource-group moneysnap-rg &>/dev/null; then
               az containerapp update \
                 --name moneysnap-backend \
                 --resource-group moneysnap-rg \
-                --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-backend:latest \
+                --image "$REGISTRY_URL/moneysnap-backend:latest" \
+                --registry-server "$REGISTRY_URL" \
+                --registry-username "$REGISTRY_USER" \
+                --registry-password "$REGISTRY_PASS" \
                 --set-env-vars \
-                  SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
-                  SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
-                  SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}"
+                  SPRING_DATASOURCE_URL="$DB_URL" \
+                  SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
+                  SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD"
             else
               az containerapp create \
                 --name moneysnap-backend \
                 --resource-group moneysnap-rg \
                 --environment moneysnap-env \
-                --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-backend:latest \
+                --image "$REGISTRY_URL/moneysnap-backend:latest" \
                 --target-port 8080 \
                 --ingress external \
-                --registry-server ${{ secrets.AZURE_REGISTRY_URL }} \
-                --registry-username ${{ secrets.AZURE_REGISTRY_USERNAME }} \
-                --registry-password ${{ secrets.AZURE_REGISTRY_PASSWORD }} \
+                --registry-server "$REGISTRY_URL" \
+                --registry-username "$REGISTRY_USER" \
+                --registry-password "$REGISTRY_PASS" \
                 --env-vars \
-                  SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
-                  SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
-                  SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}"
+                  SPRING_DATASOURCE_URL="$DB_URL" \
+                  SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
+                  SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD"
             fi
 
       - name: Deploy Frontend to Container App
         uses: azure/cli@v1
+        env:
+          REGISTRY_URL: ${{ secrets.AZURE_REGISTRY_URL }}
+          REGISTRY_USER: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+          REGISTRY_PASS: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
         with:
           inlineScript: |
             if az containerapp show --name moneysnap-frontend --resource-group moneysnap-rg &>/dev/null; then
               az containerapp update \
                 --name moneysnap-frontend \
                 --resource-group moneysnap-rg \
-                --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-frontend:latest
+                --image "$REGISTRY_URL/moneysnap-frontend:latest" \
+                --registry-server "$REGISTRY_URL" \
+                --registry-username "$REGISTRY_USER" \
+                --registry-password "$REGISTRY_PASS"
             else
               az containerapp create \
                 --name moneysnap-frontend \
                 --resource-group moneysnap-rg \
                 --environment moneysnap-env \
-                --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-frontend:latest \
+                --image "$REGISTRY_URL/moneysnap-frontend:latest" \
                 --target-port 80 \
                 --ingress external \
-                --registry-server ${{ secrets.AZURE_REGISTRY_URL }} \
-                --registry-username ${{ secrets.AZURE_REGISTRY_USERNAME }} \
-                --registry-password ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+                --registry-server "$REGISTRY_URL" \
+                --registry-username "$REGISTRY_USER" \
+                --registry-password "$REGISTRY_PASS"
             fi
