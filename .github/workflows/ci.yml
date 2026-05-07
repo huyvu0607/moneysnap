@@ -98,7 +98,20 @@ jobs:
         uses: azure/cli@v1
         with:
           inlineScript: |
-            az containerapp update \
-              --name moneysnap-frontend \
-              --resource-group moneysnap-rg \
-              --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-frontend:latest
+            if az containerapp show --name moneysnap-frontend --resource-group moneysnap-rg &>/dev/null; then
+              az containerapp update \
+                --name moneysnap-frontend \
+                --resource-group moneysnap-rg \
+                --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-frontend:latest
+            else
+              az containerapp create \
+                --name moneysnap-frontend \
+                --resource-group moneysnap-rg \
+                --environment moneysnap-env \
+                --image ${{ secrets.AZURE_REGISTRY_URL }}/moneysnap-frontend:latest \
+                --target-port 80 \
+                --ingress external \
+                --registry-server ${{ secrets.AZURE_REGISTRY_URL }} \
+                --registry-username ${{ secrets.AZURE_REGISTRY_USERNAME }} \
+                --registry-password ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+            fi
